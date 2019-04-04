@@ -4,13 +4,20 @@ useful in building models with it.
 """
 import math
 
-from keras import activations, regularizers
+from tensorflow.python.keras import activations, regularizers
 # noinspection PyPep8Naming
-from keras import backend as K
-from keras.engine import Layer
-from keras.layers import Embedding
-from keras.utils import get_custom_objects
+from tensorflow.python.keras import backend as K
+from tensorflow.python.keras.engine import Layer
+from tensorflow.python.keras.layers import Embedding
+from tensorflow.python.keras.utils import get_custom_objects
+from tensorflow import TensorShape
 
+
+def make_int(l):
+    if isinstance(l, (list, TensorShape)):
+         return [make_int(el) for el in l]
+    else:
+        return l.value if not isinstance(l, int) else l
 
 class ReusableEmbedding(Embedding):
     """
@@ -78,6 +85,15 @@ class TiedOutputEmbedding(Layer):
     def build(self, input_shape):
         main_input_shape, embedding_matrix_shape = input_shape
         emb_input_dim, emb_output_dim = embedding_matrix_shape
+        emb_input_dim, emb_output_dim = make_int(
+            [emb_input_dim, emb_output_dim]
+        )
+        main_input_shape = make_int(
+            main_input_shape
+        )
+        embedding_matrix_shape = make_int(
+            embedding_matrix_shape
+        )
         assert len(main_input_shape) == 3
         self.projection = self.add_weight(
             name='kernel',

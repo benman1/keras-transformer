@@ -1,8 +1,9 @@
 import numpy as np
 # noinspection PyPep8Naming
-from keras import backend as K
-from keras.engine import Layer
-from keras.utils import get_custom_objects
+from tensorflow.python.keras import backend as K
+from tensorflow.python.keras.engine import Layer
+from tensorflow.python.keras.utils import get_custom_objects
+from tensorflow import is_numeric_tensor
 
 
 class _BaseMultiHeadAttention(Layer):
@@ -289,6 +290,9 @@ class MultiHeadSelfAttention(_BaseMultiHeadAttention):
 
     # noinspection PyAttributeOutsideInit
     def build(self, input_shape):
+        print(input_shape)
+        print(type(input_shape))
+        input_shape = tuple([int(i_s.value) if i_s.value is not None else None for i_s in input_shape])
         if not isinstance(input_shape, tuple):
             raise ValueError('Invalid input')
         d_model = input_shape[-1]
@@ -307,9 +311,9 @@ class MultiHeadSelfAttention(_BaseMultiHeadAttention):
         return super().build(input_shape)
 
     def call(self, inputs, **kwargs):
-        if not K.is_tensor(inputs):
-            raise ValueError(
-                'The layer can be called only with one tensor as an argument')
+        #if not K.is_tensor(inputs):
+        #    raise ValueError(
+        #        'The layer can be called only with one tensor as an argument')
         _, seq_len, d_model = K.int_shape(inputs)
         # The first thing we need to do is to perform affine transformations
         # of the inputs to get the Queries, the Keys and the Values.

@@ -6,11 +6,12 @@ Contains implementation of the Transformer model described in papers
 import math
 from typing import Union, Callable, Optional
 
-from keras.layers import Layer, Add, activations, Dropout
-from keras import initializers
+from tensorflow.python.keras.layers import Layer, Add, Dropout
+from tensorflow.python.keras import activations
+from tensorflow.python.keras import initializers
 # noinspection PyPep8Naming
-from keras import backend as K
-from keras.utils import get_custom_objects
+from tensorflow.python.keras import backend as K
+from tensorflow.python.keras.utils import get_custom_objects
 
 from keras_transformer.attention import MultiHeadSelfAttention
 
@@ -93,7 +94,10 @@ class TransformerTransition(Layer):
 
     # noinspection PyAttributeOutsideInit
     def build(self, input_shape):
+        #input_shape = tuple([int(i_s.value) if i_s.value is not None else None for i_s in input_shape])
         d_model = input_shape[-1]
+        if not isinstance(d_model, int):
+            d_model = d_model.value
         self.weights1 = self.add_weight(
             name='weights1',
             shape=(d_model, self.size_multiplier * d_model),
@@ -119,6 +123,11 @@ class TransformerTransition(Layer):
     def call(self, inputs, **kwargs):
         input_shape = K.int_shape(inputs)
         d_model = input_shape[-1]
+        sequence_length = input_shape[-2]
+        if not isinstance(d_model, int):
+            d_model = d_model.value
+        if not isinstance(sequence_length, int):
+            sequence_length = sequence_length.value
         step1 = self.activation(
             K.bias_add(
                 K.dot(K.reshape(inputs, (-1, d_model)),
@@ -129,7 +138,7 @@ class TransformerTransition(Layer):
             K.dot(step1, self.weights2),
             self.biases2,
             data_format='channels_last')
-        result = K.reshape(step2, (-1,) + input_shape[-2:])
+        result = K.reshape(step2, (-1, sequence_length, d_model))
         return result
 
 
@@ -254,6 +263,8 @@ class TransformerACT(Layer):
     def build(self, input_shape):
         assert len(input_shape) == 3
         _, sequence_length, d_model = input_shape
+        if not isinstance(d_model, int):
+            d_model = d_model.value
         self.halting_kernel = self.add_weight(
             name='halting_kernel',
             shape=(d_model, 1),
@@ -285,6 +296,10 @@ class TransformerACT(Layer):
     def call(self, inputs, **kwargs):
         input_shape = K.int_shape(inputs)
         sequence_length, d_model = input_shape[-2:]
+        if not isinstance(d_model, int):
+            d_model = d_model.value
+        if not isinstance(sequence_length, int):
+            sequence_length = sequence_length.value
         # output of the "sigmoid halting unit" (not the probability yet)
         halting = K.sigmoid(
             K.reshape(

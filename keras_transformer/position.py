@@ -1,8 +1,8 @@
 import numpy as np
 # noinspection PyPep8Naming
-from keras import backend as K
-from keras.engine import Layer
-from keras.utils import get_custom_objects
+from tensorflow.python.keras import backend as K
+from tensorflow.python.keras.engine import Layer
+from tensorflow.python.keras.utils import get_custom_objects
 
 
 def positional_signal(hidden_size: int, length: int,
@@ -106,6 +106,11 @@ class TransformerCoordinateEmbedding(Layer):
     # noinspection PyAttributeOutsideInit
     def build(self, input_shape):
         sequence_length, d_model = input_shape[-2:]
+        sequence_length = int(sequence_length.value)
+        d_model = int(d_model.value)
+        #print('{} - {}'.format(sequence_length, d_model))
+        print('{} - {}'.format(type(sequence_length), type(d_model)))
+        print('{}'.format(type(self.max_depth)))
         self.word_position_embeddings = self.add_weight(
             shape=(sequence_length, d_model),
             initializer='uniform',
